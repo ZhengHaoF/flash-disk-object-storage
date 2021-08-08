@@ -1,36 +1,26 @@
-# 闪电盘对象储存
+1. # Lightning disk object storage
 
-#### Description
-白嫖闪电盘做对象储存（还在开发）
+   #### Introduction
 
-#### Software Architecture
-Software architecture description
+   White whoring lightning disk to do object storage (still under development)
 
-#### Installation
+   * Note: If the file to be uploaded does not have a file name, make sure the file name does not have the English "." in it *
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+   ### V1.4 update.
 
-#### Instructions
+   1. optimize the operation logic
+   2. add rename_put upload method, which can keep the file name when downloading
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+   **Version 1.4 [click me to download](https://oss.shandianpan.com/abcbe93921193cfb8bcc2a1e2e97d0a0)**
 
-#### Contribution
+   ### V1.2 update
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
+   1. Batch uploading of files is supported
 
+   **1.2 version [click me to download](https://oss.shandianpan.com/92ad2e2ac04cca7e51c714dd604e2344.exe)**
 
-#### Gitee Feature
+   Add QQ group: 857994945 Go a wave
 
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+   
+
+   Translated with www.DeepL.com/Translator (free version)

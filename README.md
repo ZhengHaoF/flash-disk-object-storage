@@ -3,7 +3,20 @@
 #### 介绍
 白嫖闪电盘做对象储存（还在开发）
 
-1.2版本[点我下载](https://oss.shandianpan.com/92ad2e2ac04cca7e51c714dd604e2344.exe)
+*注意：如果需要上传的文件没有文件名，要确保文件名中没有英文的 “.”*
+
+### V1.4更新：
+
+1. 优化操作逻辑
+2. 新增rename_put上传方式，可保留下载时的文件名
+
+**1.4版本[点我下载](https://oss.shandianpan.com/abcbe93921193cfb8bcc2a1e2e97d0a0)**
+
+### V1.2更新
+
+1. 文件支持批量上传
+
+**1.2版本[点我下载](https://oss.shandianpan.com/92ad2e2ac04cca7e51c714dd604e2344.exe)**
 
 加QQ群：857994945 走一波
 
