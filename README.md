@@ -10,7 +10,7 @@
 1. 优化操作逻辑
 2. 新增rename_put上传方式，可保留下载时的文件名
 
-**1.4版本[点我下载](https://oss.shandianpan.com/abcbe93921193cfb8bcc2a1e2e97d0a0)**
+**1.4版本[点我下载](https://oss.shandianpan.com/5ec4fd0a4ec506deb0f1064b744c350f)**
 
 ### V1.2更新
 
