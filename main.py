@@ -1,16 +1,43 @@
 # -*- coding:utf-8 -*-
+import json
 import os.path
 import random
 import string
+import traceback
 
 import requests
 from tkinter import *
 import tkinter.filedialog
 import time
 
-now_upload_dir = 0  # 1720942
-now_file = None
-now_file_path = ""
+print("By：轻芒 群号：857994945 闪电盘直链工具 V1.5")
+try:
+    print("正在打开配置文件")
+    config_json = json.load(open("config.json", 'r'))
+    now_file = None
+    now_file_path = ""
+    username = ""
+    now_upload_dir = ""
+    now_upload_item_index = 0
+    user_token = ""
+    user_id = 0  # 多用户下，当前用户ID
+    for index, user_config in enumerate(config_json['user_config']):
+        # 暂时先这样，等以后写多用户的时候改
+        username = user_config['user_name']
+        now_upload_dir = user_config['now_upload_dir']  # 现在上传的文件夹ID
+        full_dir = user_config['full_dir']  # 已经上传满的文件夹
+        print(f"正在读取用户{username}的配置文件")
+        print(f"用户名：{username}")
+        print(f"当前上传的文件夹：{now_upload_dir}")
+        print(f"已上传满的文件夹：{full_dir}")
+
+except IOError:
+    print("找不到config.json配置文件")
+
+
+def update_json(config_json):
+    with open('config.json', 'w') as f:
+        json.dump(config_json, f)
 
 
 def login_sdp(username, password):
@@ -72,6 +99,8 @@ def get_redirect_file_url(token, file_id):
 
 def mkdir(token, dir_name):
     # 创建文件夹
+    global now_upload_dir
+    now_upload_dir = dir_name
     data = {
         "token": token,
         "id": "0",
@@ -101,15 +130,12 @@ def rename_file(token, file_id, modify_name):
             return 0
 
 
-def file_pre_upload(token, file_path, again):
+def file_pre_upload(token, file_path):
     # 文件预上传
     # 如果again==true,代表是由于文件夹满了，二次上传的
     global now_upload_dir  # 申明使用全局变量
     global now_file  # 当前上传的文件
-    if again:
-        now_file = now_file
-    else:
-        now_file = open(file_path, 'rb')
+    now_file = open(file_path, 'rb')
     file_name = now_file.name
     file_size = os.path.getsize(file_path) / 1024 / 1024
     print("文件名：" + os.path.basename(now_file.name))
@@ -129,6 +155,7 @@ def file_pre_upload(token, file_path, again):
                 time.sleep(10)  # 暂停10秒钟
         r_json = r.json()
         if r_json['code'] == 0:
+            # 上传成功
             return r_json['data']
         else:
             print(r.text)
@@ -166,23 +193,14 @@ def upload_file(token, file_pre_upload_json):
                      'key'] + "\n")
         return r_json['data']['id']
     elif r_json['code'] == 1:
-        print("该文件夹文件数已达最大，正在自动新建文件夹")
-        now_upload_dir = mkdir(token=user_token, dir_name=''.join(
-            random.choice(string.ascii_uppercase + string.digits) for _ in range(10)))  # 文件夹名是随机字符串
-        print("新的文件夹ID:" + str(now_upload_dir))
         # 重新预上传
-        again_file_pre_upload_json = file_pre_upload(token=user_token, file_path=now_file_path, again=True)
-        upload_file(token=user_token, file_pre_upload_json=again_file_pre_upload_json)
         return 1
     else:
-        print(r.text)
         print("操作失败")
         return 2
 
 
-print("By：轻芒 群号：857994945 V1.4")
-username = input("请输入用户名：")
-password = input("请输入密码：")
+password = input(f"请输入{username}的密码：")
 user_token = login_sdp(username=username, password=password)  # 登录
 print("\n\n操作提示：")
 print("现有两个命令如下，如使用rename_put，上传的文件需没有后缀名，并手动指定后缀名")
@@ -197,23 +215,41 @@ if count_code == "put":
         p = tkinter.filedialog.askopenfilenames()
         root.quit()
         try:
-            for item in p:
+            now_upload_item_index = 0
+            while now_upload_item_index < len(p):
+                item = p[now_upload_item_index]
+                # for item in p:
+                item = p[now_upload_item_index]
                 print("开始预上传")
-                file_pre_upload_json = file_pre_upload(user_token, item, again=False)  # 文件预上传 ,用来获取下次上传的参数
+                now_file_path = item
+                file_pre_upload_json = file_pre_upload(user_token, item)  # 文件预上传 ,用来获取下次上传的参数
                 if file_pre_upload_json != 1 and file_pre_upload_json != 2:
                     # 预上传成功
                     print("开始上传")
                     r_code = upload_file(user_token, file_pre_upload_json)  # 开始上传
                 else:
                     pass
+                now_upload_item_index += 1
+                if r_code == 1:
+                    print("该文件夹文件数已达最大，正在自动新建文件夹")
+                    config_json['user_config'][user_id]["full_dir"].append(now_upload_dir)  # 设置已填满的文件夹
+                    now_upload_dir = mkdir(token=user_token, dir_name=''.join(
+                        random.choice(string.ascii_uppercase + string.digits) for _ in range(10)))  # 文件夹名是随机字符串
+                    print("新的文件夹ID:" + str(now_upload_dir))
+                    config_json['user_config'][user_id]["now_upload_dir"] = now_upload_dir  # 设置最新的文件夹
+
+                    print("开始重新上传")
+                    with open("config.json", 'w') as f:
+                        json.dump(config_json, f, indent="\t")
+                    now_upload_item_index -= 1
         except Exception as e:
             print(e)
+            print(traceback.format_exc())
             print("文件不存在")
 elif count_code == "ls":
     get_file_list(token=user_token, page=0, dir_id=0)
 elif count_code == "mkdir":
     dir_id = mkdir(token=user_token)
-    print(dir_id)
 elif count_code == "rename_put":
     if user_token != 0:
         suffix = input("请输入批量上传的文件后缀：")
@@ -222,21 +258,44 @@ elif count_code == "rename_put":
         p = tkinter.filedialog.askopenfilenames()
         root.quit()
         try:
-            for item in p:
+            now_upload_item_index = 0
+            while now_upload_item_index < len(p):
+                item = p[now_upload_item_index]
+                # for item in p:
+                item = p[now_upload_item_index]
                 print("开始预上传")
-                file_pre_upload_json = file_pre_upload(user_token, item, again=False)  # 文件预上传 ,用来获取下次上传的参数
+                now_file_path = item
+                file_pre_upload_json = file_pre_upload(user_token, item)  # 文件预上传 ,用来获取下次上传的参数
                 if file_pre_upload_json != 1 and file_pre_upload_json != 2:
                     # 预上传成功
                     print("开始上传")
                     r_code = upload_file(user_token, file_pre_upload_json)  # 开始上传
-                    if r_code != 1 and r_code != 2:
-                        print("开始执行重命名")
-                        r = rename_file(token=user_token, file_id=r_code,
-                                        modify_name=os.path.basename(now_file.name) + "." + suffix)
-                        if r == 0:
-                            # 获取文件名修改后的文件直链
-                            get_redirect_file_url(token=user_token, file_id=r_code)
+                    # 如果 upload_file() 操作成功，则返回的是文件ID
+                else:
+                    pass
+                now_upload_item_index += 1
+                if r_code == 1:
+                    print("该文件夹文件数已达最大，正在自动新建文件夹")
+                    config_json['user_config'][user_id]["full_dir"].append(now_upload_dir)  # 设置已填满的文件夹
+                    now_upload_dir = mkdir(token=user_token, dir_name=''.join(
+                        random.choice(string.ascii_uppercase + string.digits) for _ in range(10)))  # 文件夹名是随机字符串
+                    print("新的文件夹ID:" + str(now_upload_dir))
+                    config_json['user_config'][user_id]["now_upload_dir"] = now_upload_dir  # 设置最新的文件夹
+                    print("开始重新上传")
+                    with open("config.json", 'w') as f:
+                        json.dump(config_json, f, indent="\t")
+                    now_upload_item_index -= 1
+
+                print("开始执行重命名")
+                r = rename_file(token=user_token, file_id=r_code,
+                                modify_name=os.path.basename(now_file.name) + "." + suffix)
+                if r == 0:
+                    # 获取文件名修改后的文件直链
+                    get_redirect_file_url(token=user_token, file_id=r_code)
 
         except Exception as e:
             print(e)
+            print(traceback.format_exc())
             print("文件不存在")
+
+input("操作结束，按任意键退出···")
