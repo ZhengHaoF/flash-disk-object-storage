@@ -10,7 +10,7 @@ from tkinter import *
 import tkinter.filedialog
 import time
 
-print("By：轻芒 群号：857994945 闪电盘直链工具 V1.5")
+print("By：轻芒 群号：857994945 闪电盘直链工具 V1.6")
 try:
     print("正在打开配置文件")
     config_json = json.load(open("config.json", 'r'))
@@ -24,6 +24,8 @@ try:
     for index, user_config in enumerate(config_json['user_config']):
         # 暂时先这样，等以后写多用户的时候改
         username = user_config['user_name']
+        if username == "":
+            username = input("配置文件中没有用户名，请输入用户名")
         now_upload_dir = user_config['now_upload_dir']  # 现在上传的文件夹ID
         full_dir = user_config['full_dir']  # 已经上传满的文件夹
         print(f"正在读取用户{username}的配置文件")
@@ -58,6 +60,27 @@ def get_files(token, page, dir_id):
     # 获取文件信息
     data = {"token": user_token, "page": page, "id": dir_id}
     r = requests.post("https://shandianpan.com/api/pan", data=data)
+    print(r.status_code)
+    print(r.text)
+    r_json = r.json()
+    if r_json['code'] == 0:
+        file_list_json = r_json['data']
+        return file_list_json
+    else:
+        print(r.text)
+        print("操作失败")
+        return 0
+
+
+def move_files(token, file_id, to_id):
+    # 移动文件    data = {"token": user_token, "id": file_id, "to_id": to_id}
+    while True:
+        r = requests.post("https://shandianpan.com/api/pan/move", data=data)
+        if r.status_code == 200:
+            break
+        elif r.status_code == 459:
+            time.sleep(10)
+            print(r.status_code)
     r_json = r.json()
     if r_json['code'] == 0:
         file_list_json = r_json['data']
@@ -207,6 +230,7 @@ print("现有两个命令如下，如使用rename_put，上传的文件需没有
 print("如果上传的是不包含后缀的文件，需注意文件名中不能出现‘.’字符")
 print("1. 批量上传文件：put")
 print("2. 批量上传文件并保留文件名：rename_put\n")
+print("3. 获取根目录列表：ls\n")
 count_code = input("请输入指令：")
 if count_code == "put":
     if user_token != 0:
@@ -239,9 +263,9 @@ if count_code == "put":
                     config_json['user_config'][user_id]["now_upload_dir"] = now_upload_dir  # 设置最新的文件夹
 
                     print("开始重新上传")
-                    with open("config.json", 'w') as f:
-                        json.dump(config_json, f, indent="\t")
+                    update_json(config_json)
                     now_upload_item_index -= 1
+                now_file.close()
         except Exception as e:
             print(e)
             print(traceback.format_exc())
@@ -282,8 +306,7 @@ elif count_code == "rename_put":
                     print("新的文件夹ID:" + str(now_upload_dir))
                     config_json['user_config'][user_id]["now_upload_dir"] = now_upload_dir  # 设置最新的文件夹
                     print("开始重新上传")
-                    with open("config.json", 'w') as f:
-                        json.dump(config_json, f, indent="\t")
+                    update_json(config_json)
                     now_upload_item_index -= 1
 
                 print("开始执行重命名")
@@ -297,5 +320,18 @@ elif count_code == "rename_put":
             print(e)
             print(traceback.format_exc())
             print("文件不存在")
-
+elif count_code == "move":
+    # 已废弃
+    page_num = 1
+    while True:
+        file_list_json = get_files(token=user_token, page=page_num, dir_id=0)
+        page_num = page_num + 1
+        if not file_list_json:
+            break
+        for item in file_list_json:
+            if item["name"].find("桜桃喵") != -1:
+                print(item)
+                move_files(token=user_token,file_id=item['id'],to_id=1766812)
+            else:
+                print("正在查找")
 input("操作结束，按任意键退出···")
