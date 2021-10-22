@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Z-Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <script src="lib/bootstrap-4.6.0-dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap-4.6.0-dist/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/wangeditor@latest/dist/wangEditor.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="config.js"></script>
+    <style>
+        .card{
+            margin-top: 10px;
+        }
+
+        #bolg_editor{
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="img/test.png" width="32" class="d-inline-block align-top" alt="">
+            闪电盘直链工具</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">主页 <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://gitee.com/ZHFHZ/flash-disk-object-storage" target="_blank">源代码</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>{{blog_msg['msg_title']}}</strong> {{blog_msg['msg_text']}}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        主页
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                                <li class="list-group-item" v-for="(item,index) in blog_info">
+                                    <p class="font-weight-bold ">{{item["blog_title"]}}</p>
+                                    <p class="text-body" v-html="item['blog_text']"></p>
+                                    <p class="text-body"><a :href="item['download_url']">点我下载</a></p>
+                                    <span class="text-muted">{{item["blog_time"]}}</span>
+                                </li>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>工具说明</h5>
+                    </div>
+                    <div class="card-body">
+                       闪电盘直链工具是针对“闪电盘”开发的直链工具，突破了原有一次性上传20个文件的限制，可用rename_put命令突破上传格式的限制，具体教程待发布
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        软件数据
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">最新版本：V1.6</li>
+                            <li class="list-group-item">已发现BUG：2</li>
+                            <li class="list-group-item">QQ群：857994945</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 发新帖模态框 -->
+    <div class="modal fade bd-example-modal-lg" id="new_bolg" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">写作</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" id="bolg_title" placeholder="博客标题">
+                    <div id="bolg_editor">
+                        <!--文本编辑器-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" v-on:click="push_new_blog">发布</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    const vm = new Vue({
+        el:"#app",
+        data:{
+            user_login:false,
+            user_info:{
+                "user_name":"未登录",
+                "user_head_portrait":"img/head.jpg"
+            },
+            blog_info:[
+                {
+                    "blog_title":"V1.6更新    ",
+                    "blog_text":"1.修复部分电脑打开闪退的问题    ",
+                    "blog_time":"2021-10-22",
+                    "download_url":""
+                },
+                {
+                    "blog_title":"V1.5更新    ",
+                    "blog_text":"1. 支持上传超过500个文件<br>2. 新增config.json文件，操作稍微复杂了一点（教程见gitee根目录）",
+                    "blog_time":"2021-08-10",
+                    "download_url":"https://oss.shandianpan.com/5ef15b7fc6621944b0faaad96ce1a5f9.zip"
+                },
+                {
+                    "blog_title":"V1.4更新",
+                    "blog_text":"1.优化操作逻辑<br>2.新增rename_put上传方式，可保留下载时的文件名",
+                    "blog_time":"2021-08-08",
+                    "download_url":"https://oss.shandianpan.com/5ec4fd0a4ec506deb0f1064b744c350f"
+                },
+                {
+                    "blog_title":"V1.2更新",
+                    "blog_text":"1.文件支持批量上传",
+                    "blog_time":"2021-08-05",
+                    "download_url":"https://oss.shandianpan.com/92ad2e2ac04cca7e51c714dd604e2344.exe"
+                }
+            ],
+            blog_msg:{
+                "msg_title":"站点公告",
+                "msg_text":"闪电盘直链工具V1.6更新啦！"
+            }
+        },
+        methods:{
+            push_new_blog:function (){
+                let blog_text = editor.txt.html();
+                let url = server_url + "/api/";
+                axios.get(url + "getBlog/公开")
+                    .then((res) => {
+                        if (res.status === 200) {
+                            if (res.data['status'] === 200) {
+                                this.blog_info = res.data['data'];
+                            } else {
+                                alert("接口验证失败")
+                            }
+                        } else {
+                            alert("接口请求失败");
+                        }
+                    })
+                console.log(editor.txt.html());
+            }
+        }
+    });
+</script>
+<script>
+    const E = window.wangEditor
+    const editor = new E("#bolg_editor")
+    // 或者 const editor = new E(document.getElementById('div1'))
+    editor.create()
+</script>
+</html>
